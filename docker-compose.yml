@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: newsmind_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: newsmind
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: newsmind_ai_service
+    restart: always
+    environment:
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+    ports:
+      - "8000:8000"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: newsmind_backend
+    restart: always
+    depends_on:
+      - postgres
+      - ai-service
+    environment:
+      - PORT=4000
+      - DATABASE_URL=postgresql://postgres@postgres:5432/newsmind
+      - AI_SERVICE_URL=http://ai-service:8000
+      - FRONTEND_URL=${FRONTEND_URL}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-newsmind-super-secret}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-newsmind-refresh-secret}
+      - NODE_ENV=production
+    ports:
+      - "4000:4000"
+
+volumes:
+  postgres_data:

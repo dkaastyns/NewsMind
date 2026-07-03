@@ -1,0 +1,1 @@
+"""NewsMind AI service package."""
