@@ -126,30 +126,40 @@ class AnalyzeResponse(BaseModel):
 # ── Helpers ───────────────────────────────────────────────────────────────── #
 def _scrape_url(url: str) -> str:
     """Extract article text from URL using trafilatura with BeautifulSoup fallback."""
+    import httpx
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"}
+    
+    html = ""
     try:
-        import trafilatura
-        downloaded = trafilatura.fetch_url(url)
-        if downloaded:
-            text = trafilatura.extract(downloaded, include_comments=False,
-                                       include_tables=False)
+        # Fetch HTML bypassing SSL verification
+        resp = httpx.get(url, timeout=15, follow_redirects=True, headers=headers, verify=False)
+        resp.raise_for_status()
+        html = resp.text
+    except Exception as exc:
+        logger.warning("httpx download failed for %s: %s", url, exc)
+
+    if html:
+        try:
+            import trafilatura
+            text = trafilatura.extract(html, include_comments=False, include_tables=False)
             if text and len(text.strip()) > 100:
                 return text.strip()
-    except Exception as exc:
-        logger.warning("trafilatura failed for %s: %s", url, exc)
+        except Exception as exc:
+            logger.warning("trafilatura extraction failed for %s: %s", url, exc)
 
     # BS4 fallback
-    try:
-        import httpx
-        from bs4 import BeautifulSoup
-        resp = httpx.get(url, timeout=15, follow_redirects=True,
-                         headers={"User-Agent": "Mozilla/5.0"})
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
-            tag.decompose()
-        return " ".join(soup.get_text(" ", strip=True).split())[:10_000]
-    except Exception as exc:
-        logger.error("BS4 fallback also failed for %s: %s", url, exc)
-        return ""
+    if html:
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
+                tag.decompose()
+            return " ".join(soup.get_text(" ", strip=True).split())[:10_000]
+        except Exception as exc:
+            logger.error("BS4 fallback also failed for %s: %s", url, exc)
+            return ""
+            
+    return ""
 
 
 def _call_gemini(article_text: str) -> dict:

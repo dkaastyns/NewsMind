@@ -55,7 +55,7 @@ def _fetch_html(url: str) -> str | None:
         "Accept-Language": "id-ID,id;q=0.9,en;q=0.8",
     }
     try:
-        with httpx.Client(follow_redirects=True, timeout=30) as client:
+        with httpx.Client(follow_redirects=True, timeout=30, verify=False) as client:
             resp = client.get(url, headers=headers)
             resp.raise_for_status()
             return resp.text
