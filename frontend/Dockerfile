@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN rm -f package-lock.json && npm install
 COPY . .
+ENV BACKEND_API_URL=http://backend:4000
 RUN npm run build
 
 # Production stage
