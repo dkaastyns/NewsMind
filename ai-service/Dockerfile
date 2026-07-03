@@ -1,4 +1,5 @@
-FROM ghcr.io/astral-sh/uv:python3.12-slim AS builder
+FROM python:3.12-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 # Enable byte-code compilation
 ENV UV_COMPILE_BYTECODE=1
