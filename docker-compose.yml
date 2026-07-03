@@ -46,5 +46,19 @@ services:
     ports:
       - "4000:4000"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: newsmind_frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      - PORT=3000
+      - BACKEND_API_URL=http://backend:4000
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:
