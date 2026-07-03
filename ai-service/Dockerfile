@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.12-alpine AS builder
+FROM ghcr.io/astral-sh/uv:python3.12-slim AS builder
 WORKDIR /app
 # Enable byte-code compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -8,7 +8,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 # Production image
-FROM python:3.12-alpine
+FROM python:3.12-slim
 WORKDIR /app
 # Copy the virtual environment from the builder
 COPY --from=builder /app/.venv /app/.venv
