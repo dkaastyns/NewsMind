@@ -20,10 +20,10 @@ services:
       dockerfile: Dockerfile
     container_name: newsmind_ai_service
     restart: always
+    env_file:
+      - .env
     environment:
       - PORT=8000
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
     ports:
       - "8000:8000"
 
@@ -36,14 +36,12 @@ services:
     depends_on:
       - postgres
       - ai-service
+    env_file:
+      - .env
     environment:
       - PORT=4000
       - DATABASE_URL=postgresql://postgres@postgres:5432/newsmind
       - AI_SERVICE_URL=http://ai-service:8000
-      - FRONTEND_URL=${FRONTEND_URL}
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-newsmind-super-secret}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-newsmind-refresh-secret}
       - NODE_ENV=production
     ports:
       - "4000:4000"
