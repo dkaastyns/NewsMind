@@ -1,16 +1,15 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 COPY . .
-RUN npm run build
-RUN npm prune --production
+RUN bun run build
 
 # Production stage
 FROM node:20-alpine
 WORKDIR /app
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/scripts ./scripts
